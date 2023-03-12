@@ -8,5 +8,5 @@ class GroupAdmin(admin.ModelAdmin):
 
 @admin.register(Event)
 class GroupAdmin(admin.ModelAdmin):
-    fields = ('crypto', 'time', 'price_start', 'price_end', 'group')
-    list_display = ('id', 'crypto', 'time', 'price_start', 'price_end', 'group')
+    fields = ('crypto', 'time', 'end_time', 'price_start', 'price_end', 'group')
+    list_display = ('id', 'crypto', 'time', 'end_time', 'price_start', 'price_end', 'group')
