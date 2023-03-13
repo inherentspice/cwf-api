@@ -1,12 +1,15 @@
 from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework.response import Response
-from cwfapi.models import Group, Event
-from cwfapi.serializers import GroupSerializer, GroupFullSerializer, UserSerializer, EventSerializer
+from cwfapi.models import Group, Event, UserProfile
+from cwfapi.serializers import GroupSerializer, GroupFullSerializer, UserProfileSerializer, UserSerializer, EventSerializer
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 
+class UserProfileViewset(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserProfileSerializer
 
 class GroupViewset(viewsets.ModelViewSet):
     queryset = Group.objects.all()
