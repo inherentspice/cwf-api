@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure--x4e_#%pdmi9mc3i_npvv-@483bd8-rjnu#^jx=d-4+2+z7s0$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
@@ -75,7 +75,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'cwf.wsgi.application'
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
+    'http://localhost:3000',
+    'http://127.0.0.1:8000'
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:3000',
+    'http://127.0.0.1:8000'
 ]
 
 # Database
