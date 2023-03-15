@@ -7,8 +7,12 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 
-class UserProfileViewset(viewsets.ModelViewSet):
+class UserViewset(viewsets.ModelViewSet):
     queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+class UserProfileViewset(viewsets.ModelViewSet):
+    queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
 
 class GroupViewset(viewsets.ModelViewSet):
