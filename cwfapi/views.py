@@ -56,9 +56,9 @@ class MemberViewset(viewsets.ModelViewSet):
     queryset = Member.objects.all()
     serializer_class = MemberSerializer
     authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
+    permission_classes = (AllowAny,)
 
-    @action(methods='post', detail=True)
+    @action(methods=['POST'], detail=False)
     def join(self, request):
         if 'group' in request.data and 'user' in request.data:
             try:
@@ -72,6 +72,25 @@ class MemberViewset(viewsets.ModelViewSet):
 
             except:
                 response = {'message': 'Cannot join'}
+                return Response(response, status=400)
+        else:
+            response = {'message': 'Incorrect params'}
+            return Response(response, status=400)
+
+    @action(methods=['POST'], detail=False)
+    def leave(self, request):
+        if 'group' in request.data and 'user' in request.data:
+            try:
+                group = Group.objects.get(id=request.data['group'])
+                user = User.objects.get(id=request.data['user'])
+
+                member = Member.objects.get(group=group, user=user)
+                member.delete()
+                response = {'message': 'Left group'}
+                return Response(response, status=200)
+
+            except:
+                response = {'message': 'Cannot leave group'}
                 return Response(response, status=400)
         else:
             response = {'message': 'Incorrect params'}
