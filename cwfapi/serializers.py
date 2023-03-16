@@ -32,6 +32,7 @@ class EventSerializer(serializers.ModelSerializer):
         fields = ('id', 'crypto', 'time', 'end_time', 'price_start', 'price_end', 'group')
 
 class MemberSerializer(serializers.ModelSerializer):
+    user = UserSerializer(many=False)
     class Meta:
         model = Member
         fields = ('group', 'user', 'admin')
