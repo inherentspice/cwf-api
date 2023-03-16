@@ -58,6 +58,26 @@ class MemberViewset(viewsets.ModelViewSet):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
+    @action(methods='post', detail=True)
+    def join(self, request):
+        if 'group' in request.data and 'user' in request.data:
+            try:
+                group = Group.objects.get(id=request.data['group'])
+                user = User.objects.get(id=request.data['user'])
+
+                member = Member.objects.create(group=group, user=user, admin=False)
+                serializer = MemberSerializer(member, many=False)
+                response = {'message': 'Joined group', 'results': serializer.data}
+                return Response(response, status=200)
+
+            except:
+                response = {'message': 'Cannot join'}
+                return Response(response, status=400)
+        else:
+            response = {'message': 'Incorrect params'}
+            return Response(response, status=400)
+
+
 class CustomObtainAuthToken(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
         response = super(CustomObtainAuthToken, self).post(request, *args, **kwargs)
