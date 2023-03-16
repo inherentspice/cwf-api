@@ -23,4 +23,19 @@ class Event(models.Model):
     end_time = models.DateTimeField(null=False, blank=False)
     price_start = models.IntegerField(null=False, blank=False)
     price_end = models.IntegerField(null=True, blank=True)
-    group = models.ForeignKey(Group, related_name="events", on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, related_name='events', on_delete=models.CASCADE)
+
+class Member(models.Model):
+    group = models.ForeignKey(Group, related_name='members', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='members_of', on_delete=models.CASCADE)
+    admin = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = (('user', 'group'),)
+        index_together = (('user', 'group'),)
+
+class Comment(models.Model):
+    group = models.ForeignKey(Group, related_name='comments', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='user_comments', on_delete=models.CASCADE)
+    description = models.CharField(max_length=256, null=False, unique=False)
+    time = models.DateTimeField(auto_now_add=True)

@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from cwfapi.models import Group, Event, UserProfile
-from cwfapi.serializers import GroupSerializer, GroupFullSerializer, UserProfileSerializer, UserSerializer, EventSerializer, ChangePasswordSerializer
+from cwfapi.models import Group, Event, UserProfile, Member, Comment
+from cwfapi.serializers import GroupSerializer, GroupFullSerializer, UserProfileSerializer, UserSerializer, EventSerializer, ChangePasswordSerializer, MemberSerializer, CommentSerializer
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
@@ -29,6 +29,10 @@ class UserViewset(viewsets.ModelViewSet):
             return Response({'message': 'Password updated'}, status = 200)
 
 
+class CommentViewset(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+
 class UserProfileViewset(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
@@ -51,6 +55,51 @@ class EventViewset(viewsets.ModelViewSet):
     serializer_class = EventSerializer
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
+
+class MemberViewset(viewsets.ModelViewSet):
+    queryset = Member.objects.all()
+    serializer_class = MemberSerializer
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (AllowAny,)
+
+    @action(methods=['POST'], detail=False)
+    def join(self, request):
+        if 'group' in request.data and 'user' in request.data:
+            try:
+                group = Group.objects.get(id=request.data['group'])
+                user = User.objects.get(id=request.data['user'])
+
+                member = Member.objects.create(group=group, user=user, admin=False)
+                serializer = MemberSerializer(member, many=False)
+                response = {'message': 'Joined group', 'results': serializer.data}
+                return Response(response, status=200)
+
+            except:
+                response = {'message': 'Cannot join'}
+                return Response(response, status=400)
+        else:
+            response = {'message': 'Incorrect params'}
+            return Response(response, status=400)
+
+    @action(methods=['POST'], detail=False)
+    def leave(self, request):
+        if 'group' in request.data and 'user' in request.data:
+            try:
+                group = Group.objects.get(id=request.data['group'])
+                user = User.objects.get(id=request.data['user'])
+
+                member = Member.objects.get(group=group, user=user)
+                member.delete()
+                response = {'message': 'Left group'}
+                return Response(response, status=200)
+
+            except:
+                response = {'message': 'Cannot leave group'}
+                return Response(response, status=400)
+        else:
+            response = {'message': 'Incorrect params'}
+            return Response(response, status=400)
+
 
 class CustomObtainAuthToken(ObtainAuthToken):
     def post(self, request, *args, **kwargs):

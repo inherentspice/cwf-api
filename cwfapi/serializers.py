@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from cwfapi.models import Group, Event, UserProfile
+from cwfapi.models import Group, Event, UserProfile, Member, Comment
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 
@@ -31,6 +31,17 @@ class EventSerializer(serializers.ModelSerializer):
         model = Event
         fields = ('id', 'crypto', 'time', 'end_time', 'price_start', 'price_end', 'group')
 
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ('user', 'group', 'description', 'time')
+
+class MemberSerializer(serializers.ModelSerializer):
+    user = UserSerializer(many=False)
+    class Meta:
+        model = Member
+        fields = ('group', 'user', 'admin')
+
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
@@ -38,6 +49,25 @@ class GroupSerializer(serializers.ModelSerializer):
 
 class GroupFullSerializer(serializers.ModelSerializer):
     events = EventSerializer(many=True)
+    members = serializers.SerializerMethodField()
+    comments = serializers.SerializerMethodField()
+
     class Meta:
         model = Group
-        fields = ('id', 'name', 'location', 'description', 'events')
+        fields = ('id', 'name', 'location', 'description', 'events', 'members', 'comments')
+
+    def get_members(self, obj):
+        people_points = []
+        members = obj.members.all()
+        for member in members:
+            points = 0
+            members_serialized = MemberSerializer(member, many=False)
+            member_data = members_serialized.data
+            member_data['points'] = points
+            people_points.append(member_data)
+        return people_points
+
+    def get_comments(self, obj):
+        comments = Comment.objects.filter(group=obj).order_by('-time')
+        serializer = CommentSerializer(comments, many=True)
+        return serializer.data
