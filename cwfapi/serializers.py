@@ -34,7 +34,7 @@ class EventSerializer(serializers.ModelSerializer):
 class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
-        fields = ('user', 'group', 'admin')
+        fields = ('group', 'user', 'admin')
 
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
@@ -43,6 +43,19 @@ class GroupSerializer(serializers.ModelSerializer):
 
 class GroupFullSerializer(serializers.ModelSerializer):
     events = EventSerializer(many=True)
+    members = serializers.SerializerMethodField()
+
     class Meta:
         model = Group
-        fields = ('id', 'name', 'location', 'description', 'events')
+        fields = ('id', 'name', 'location', 'description', 'events', 'members')
+
+    def get_members(self, obj):
+        people_points = []
+        members = obj.members.all()
+        for member in members:
+            points = 0
+            members_serialized = MemberSerializer(member, many=False)
+            member_data = members_serialized.data
+            member_data['points'] = points
+            people_points.append(member_data)
+        return people_points
