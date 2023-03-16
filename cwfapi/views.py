@@ -1,15 +1,29 @@
 from django.shortcuts import render
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.response import Response
 from cwfapi.models import Group, Event, UserProfile
-from cwfapi.serializers import GroupSerializer, GroupFullSerializer, UserProfileSerializer, UserSerializer, EventSerializer
+from cwfapi.serializers import GroupSerializer, GroupFullSerializer, UserProfileSerializer, UserSerializer, EventSerializer, ChangePasswordSerializer
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
+from rest_framework.decorators import action
 from django.contrib.auth.models import User
 
 class UserViewset(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+    @action(methods=['PUT'], detail=True, serializer_class=ChangePasswordSerializer)
+    def change_password(self, request, pk):
+        user = User.objects.get(pk=pk)
+        serializer = ChangePasswordSerializer(data=request.data)
+
+        if serializer.is_valid():
+            if not user.check_password(serializer.data.get('old_password')):
+                return Response({'message': 'Password is incorrect'}, status = 400)
+            user.set_password(serializer.data.get('new_password'))
+            user.save()
+            return Response({'message': 'Password updated'}, status = 200)
+
 
 class UserProfileViewset(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
