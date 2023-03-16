@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from cwfapi.models import Group, Event, UserProfile, Member
-from cwfapi.serializers import GroupSerializer, GroupFullSerializer, UserProfileSerializer, UserSerializer, EventSerializer, ChangePasswordSerializer, MemberSerializer
+from cwfapi.models import Group, Event, UserProfile, Member, Comment
+from cwfapi.serializers import GroupSerializer, GroupFullSerializer, UserProfileSerializer, UserSerializer, EventSerializer, ChangePasswordSerializer, MemberSerializer, CommentSerializer
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
@@ -28,6 +28,10 @@ class UserViewset(viewsets.ModelViewSet):
             user.save()
             return Response({'message': 'Password updated'}, status = 200)
 
+
+class CommentViewset(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
 
 class UserProfileViewset(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
