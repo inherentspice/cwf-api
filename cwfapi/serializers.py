@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from cwfapi.models import Group, Event, UserProfile
+from cwfapi.models import Group, Event, UserProfile, Member
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 
@@ -30,6 +30,11 @@ class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = ('id', 'crypto', 'time', 'end_time', 'price_start', 'price_end', 'group')
+
+class MemberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Member
+        fields = ('user', 'group', 'admin')
 
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:
