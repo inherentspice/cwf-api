@@ -128,7 +128,9 @@ class BetViewset(viewsets.ModelViewSet):
 
             in_group = self.checkIfUserInGroup(event, request.user)
 
-            if event.end_time > datetime.now() and in_group:
+            # if event.end_time > datetime.now() and in_group:
+            if in_group:
+
                 price_end = request.data['price_end']
 
                 try:
