@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from cwfapi.models import Group, Event, UserProfile, Member, Comment
-from cwfapi.serializers import GroupSerializer, GroupFullSerializer, UserProfileSerializer, UserSerializer, EventSerializer, ChangePasswordSerializer, MemberSerializer, CommentSerializer
+from cwfapi.models import Group, Event, UserProfile, Member, Comment, Bet
+from cwfapi.serializers import GroupSerializer, GroupFullSerializer, UserProfileSerializer, UserSerializer, EventSerializer, ChangePasswordSerializer, MemberSerializer, CommentSerializer, EventFullSerializer, BetSerializer
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
@@ -56,6 +56,11 @@ class EventViewset(viewsets.ModelViewSet):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = EventFullSerializer(instance, many=False, context={'request': request})
+        return Response(serializer.data)
+
 class MemberViewset(viewsets.ModelViewSet):
     queryset = Member.objects.all()
     serializer_class = MemberSerializer
@@ -100,6 +105,11 @@ class MemberViewset(viewsets.ModelViewSet):
             response = {'message': 'Incorrect params'}
             return Response(response, status=400)
 
+class BetViewset(viewsets.ModelViewSet):
+    queryset = Bet.objects.all()
+    serializer_class = BetSerializer
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
 
 class CustomObtainAuthToken(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
