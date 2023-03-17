@@ -32,6 +32,7 @@ class EventSerializer(serializers.ModelSerializer):
         fields = ('id', 'crypto', 'time', 'end_time')
 
 class BetSerializer(serializers.ModelSerializer):
+    user = UserSerializer(many=False)
     class Meta:
         model = Bet
         fields = ('id', 'user', 'event', 'price_end')
