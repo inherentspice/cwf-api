@@ -35,7 +35,7 @@ class BetSerializer(serializers.ModelSerializer):
     user = UserSerializer(many=False)
     class Meta:
         model = Bet
-        fields = ('id', 'user', 'event', 'price_end')
+        fields = ('id', 'user', 'event', 'price_end', 'points')
 
 class EventFullSerializer(serializers.ModelSerializer):
     bets = BetSerializer(many=True)
