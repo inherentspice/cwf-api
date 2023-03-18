@@ -17,6 +17,9 @@ class Group(models.Model):
     class Meta:
         unique_together = (('name', 'location'))
 
+    def num_members(self):
+        return Member.objects.filter(group=self).count()
+
 class Event(models.Model):
     crypto = models.CharField(max_length=32, blank=False)
     time = models.DateTimeField(null=False, blank=False)
