@@ -1,8 +1,9 @@
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from cwfapi.models import Group, Event, UserProfile, Member, Comment
-from cwfapi.serializers import GroupSerializer, GroupFullSerializer, UserProfileSerializer, UserSerializer, EventSerializer, ChangePasswordSerializer, MemberSerializer, CommentSerializer
+from cwfapi.models import Group, Event, UserProfile, Member, Comment, Bet
+from cwfapi.serializers import GroupSerializer, GroupFullSerializer, UserProfileSerializer, UserSerializer, EventSerializer, ChangePasswordSerializer, MemberSerializer, CommentSerializer, EventFullSerializer, BetSerializer
+from datetime import datetime
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
@@ -56,6 +57,11 @@ class EventViewset(viewsets.ModelViewSet):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = EventFullSerializer(instance, many=False, context={'request': request})
+        return Response(serializer.data)
+
 class MemberViewset(viewsets.ModelViewSet):
     queryset = Member.objects.all()
     serializer_class = MemberSerializer
@@ -100,6 +106,57 @@ class MemberViewset(viewsets.ModelViewSet):
             response = {'message': 'Incorrect params'}
             return Response(response, status=400)
 
+class BetViewset(viewsets.ModelViewSet):
+    queryset = Bet.objects.all()
+    serializer_class = BetSerializer
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+
+    def create(self, request, *args, **kwargs):
+        response = {"message": "Method not allowed"}
+        return Response(response, status=405)
+
+    def update(self, request, *args, **kwargs):
+        response = {"message": "Method not allowed"}
+        return Response(response, status=405)
+
+    @action(methods=['POST'], detail=False, url_path='place_bet')
+    def place_bet(self, request):
+        if 'event' in request.data and 'price_end' in request.data:
+            event_id = request.data['event']
+            event = Event.objects.get(id=event_id)
+
+            in_group = self.checkIfUserInGroup(event, request.user)
+
+            # if event.end_time > datetime.now() and in_group:
+            if in_group:
+
+                price_end = request.data['price_end']
+
+                try:
+                    #Attempted Update
+                    my_bet = Bet.objects.get(event=event_id, user=request.user.id)
+                    response = {"message": "Bet cannot be changed"}
+                    return Response(response, status=400)
+                except:
+                    #Create bet
+                    my_bet = Bet.objects.create(event=event, user=request.user, price_end=price_end)
+                    serializer = BetSerializer(my_bet, many=False)
+                    response = {"message": "Bet Created", "new": True, "result": serializer.data}
+                    return Response(response, status=200)
+
+            else:
+                response = {"message": "Event is over. Can't place bet."}
+                return Response(response, status=400)
+        else:
+            response = {"message": "Incorrect parameters"}
+            return Response(response, status=400)
+
+    def checkIfUserInGroup(self, event, user):
+        try:
+            return Member.objects.get(user=user, group=event.group)
+        except:
+            return False
 
 class CustomObtainAuthToken(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
