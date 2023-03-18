@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from cwfapi.models import Group, Event, UserProfile, Member, Comment, Bet
 from cwfapi.serializers import GroupSerializer, GroupFullSerializer, UserProfileSerializer, UserSerializer, EventSerializer, ChangePasswordSerializer, MemberSerializer, CommentSerializer, EventFullSerializer, BetSerializer
 from datetime import datetime
+import pytz
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
@@ -61,6 +62,47 @@ class EventViewset(viewsets.ModelViewSet):
         instance = self.get_object()
         serializer = EventFullSerializer(instance, many=False, context={'request': request})
         return Response(serializer.data)
+
+    @action(methods=['PUT'], detail=True)
+    def set_result(self, request, pk):
+        event = self.get_object()
+        if 'price_end' in request.data:
+            event.price_end = request.data['price_end']
+            event.save()
+            self.calculate_points()
+            serializer = EventFullSerializer(event, context={'request': request})
+            return Response(serializer.data, status=200)
+        else:
+            response = {'message': "Incorrect Parameters"}
+            return Response(response, status=400)
+
+    def calculate_points(self):
+        event = self.get_object()
+        bets = event.bets.all()
+        for bet in bets:
+            user_points = 0
+
+            # 10 pts for exact match
+            if bet.price_end == event.price_end:
+                user_points = 10
+            else:
+                # Calculate the percentage difference
+                diff = abs(event.price_end - bet.price_end)
+                percent_diff = (diff / event.price_end) * 100
+
+                # 3 pts for within five percent
+                if percent_diff <= 5:
+                    user_points = 3
+                # 1 pt for within ten percent
+                elif percent_diff <= 10:
+                    user_points = 1
+
+            # Update user_points for the bet
+            bet.points = user_points
+            bet.save()
+
+
+
 
 class MemberViewset(viewsets.ModelViewSet):
     queryset = Member.objects.all()
@@ -128,8 +170,7 @@ class BetViewset(viewsets.ModelViewSet):
 
             in_group = self.checkIfUserInGroup(event, request.user)
 
-            # if event.end_time > datetime.now() and in_group:
-            if in_group:
+            if event.end_time > datetime.now(pytz.UTC) and in_group:
 
                 price_end = request.data['price_end']
 
