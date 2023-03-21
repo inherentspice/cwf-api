@@ -5,6 +5,7 @@ from cwfapi.models import Group, Event, UserProfile, Member, Comment, Bet
 from cwfapi.serializers import GroupSerializer, GroupFullSerializer, UserProfileSerializer, UserSerializer, EventSerializer, ChangePasswordSerializer, MemberSerializer, CommentSerializer, EventFullSerializer, BetSerializer
 from datetime import datetime
 import pytz
+import requests
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
@@ -66,14 +67,16 @@ class EventViewset(viewsets.ModelViewSet):
     @action(methods=['PUT'], detail=True)
     def set_result(self, request, pk):
         event = self.get_object()
-        if 'price_end' in request.data:
-            event.price_end = request.data['price_end']
+
+        price_end = self.fetch_price_end_from_coingecko(event)
+        if price_end is not None:
+            event.price_end = price_end
             event.save()
             self.calculate_points()
             serializer = EventFullSerializer(event, context={'request': request})
             return Response(serializer.data, status=200)
         else:
-            response = {'message': "Incorrect Parameters"}
+            response = {'message': "Unable to fetch price_end from CoinGecko"}
             return Response(response, status=400)
 
     def calculate_points(self):
@@ -101,6 +104,18 @@ class EventViewset(viewsets.ModelViewSet):
             bet.points = user_points
             bet.save()
 
+    def fetch_price_end_from_coingecko(self, event):
+        coin_id = event.crypto.lower()
+        end_time = event.end_time.strftime("%d-%m-%Y")
+        url = f'https://api.coingecko.com/api/v3/coins/{coin_id}/history?date={end_time}&localization=false'
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            data = response.json()
+            price_usd = data.get('market_data', {}).get('current_price', {}).get('usd')
+            return price_usd
+        else:
+            return None
 
 
 
